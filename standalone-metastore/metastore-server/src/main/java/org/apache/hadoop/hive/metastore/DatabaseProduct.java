@@ -49,7 +49,7 @@ public class DatabaseProduct implements Configurable {
   static final private Logger LOG = LoggerFactory.getLogger(DatabaseProduct.class.getName());
 
   public enum DbType {DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER, CUSTOM, UNDEFINED};
-  public DbType dbType;
+  static public DbType dbType;
 
   // Singleton instance
   private static DatabaseProduct theDatabaseProduct;
