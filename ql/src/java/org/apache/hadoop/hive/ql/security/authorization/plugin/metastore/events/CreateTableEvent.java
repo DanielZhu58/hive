@@ -63,9 +63,18 @@ public class CreateTableEvent extends HiveMetaStoreAuthorizableEvent {
     PreCreateTableEvent       event = (PreCreateTableEvent) preEventContext;
     Table                     table = event.getTable();
     String                    uri   = getSdLocation(table.getSd());
+    // if the table is storagehandler based table, need storageuri as hive privilege objects
+    //  storagehandler type + cluster + location
+    String storagehandler_uri = table.getParameters().getOrDefault("storage_handler", null);
+    if (storagehandler_uri != null && storagehandler_uri.contains("iceberg")){
+      storagehandler_uri = "hiveicebergstoragehandler://"+ table.getParameters().getOrDefault("metadata_location", "");
+    }
 
     if (StringUtils.isNotEmpty(uri)) {
       ret.add(new HivePrivilegeObject(HivePrivilegeObjectType.DFS_URI, null, uri));
+    }
+    if (storagehandler_uri != null && storagehandler_uri.contains("iceberg")){
+      ret.add(getHivePrivilegeObjectStorageHandlerUri(storagehandler_uri));
     }
     return ret;
   }
@@ -78,12 +87,22 @@ public class CreateTableEvent extends HiveMetaStoreAuthorizableEvent {
     Table                     table = event.getTable();
     Database                  database = event.getDatabase();
     String                    uri   = getSdLocation(table.getSd());
+    // if the table is storagehandler based table, need storageuri as hive privilege objects
+    //  storagehandler type + cluster + location
+    String storagehandler_uri = table.getParameters().getOrDefault("storage_handler", null);
+    if (storagehandler_uri != null && storagehandler_uri.contains("iceberg")){
+      storagehandler_uri = "hiveicebergstoragehandler://"+ table.getParameters().getOrDefault("metadata_location", "");
+    }
 
     ret.add(getHivePrivilegeObject(database));
     ret.add(getHivePrivilegeObject(table));
 
     if (StringUtils.isNotEmpty(uri) && !TableType.EXTERNAL_TABLE.toString().equalsIgnoreCase(table.getTableType())) {
       ret.add(new HivePrivilegeObject(HivePrivilegeObjectType.DFS_URI, null, uri));
+    }
+
+    if (storagehandler_uri != null && storagehandler_uri.contains("iceberg")){
+      ret.add(getHivePrivilegeObjectStorageHandlerUri(storagehandler_uri));
     }
 
     COMMAND_STR = buildCommandString(COMMAND_STR,table);
