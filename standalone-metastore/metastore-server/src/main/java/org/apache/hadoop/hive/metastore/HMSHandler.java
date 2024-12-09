@@ -7421,6 +7421,64 @@ public class HMSHandler extends FacebookBase implements IHMSHandler {
   }
 
   @Override
+  public boolean delete_partition_column_statistics_req(DeletePartitionColumnStatisticsRequest req) throws TException {
+    String dbName = req.getDb_name();
+    String tableName = req.getTbl_name();
+    List<String> colNames = req.getCol_names();
+    String partName = req.getPart_name();
+    String engine = req.getEngine();
+    dbName = dbName.toLowerCase();
+    String[] parsedDbName = parseDbName(dbName, conf);
+    tableName = tableName.toLowerCase();
+    if (colNames != null) {
+      for (String colName : colNames) {
+        colName = colName.toLowerCase();
+        startFunction("delete_column_statistics_by_partition",": table=" +
+                TableName.getQualified(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName) +
+                " partition=" + partName + " column=" + colName);
+      }
+    }
+    boolean ret = false, committed = false;
+
+    getMS().openTransaction();
+    try {
+      List<String> partVals = getPartValsFromName(getMS(), parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName, partName);
+      Table table = getMS().getTable(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName);
+      // This API looks unused; if it were used we'd need to update stats state and write ID.
+      // We cannot just randomly nuke some txn stats.
+      if (TxnUtils.isTransactionalTable(table)) {
+        throw new MetaException("Cannot delete stats via this API for a transactional table");
+      }
+
+      ret = getMS().deletePartitionMultiColumnStatistics(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName,
+              partName, partVals, colNames, engine);
+      if (ret && colNames != null) {
+        for (String colName : colNames) {
+          if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                    EventType.DELETE_PARTITION_COLUMN_STAT,
+                    new DeletePartitionColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName,
+                            partName, partVals, colName, engine, this));
+          }
+          if (!listeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(listeners,
+                    EventType.DELETE_PARTITION_COLUMN_STAT,
+                    new DeletePartitionColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName,
+                            partName, partVals, colName, engine, this));
+          }
+        }
+      }
+      committed = getMS().commitTransaction();
+    } finally {
+      if (!committed) {
+        getMS().rollbackTransaction();
+      }
+      endFunction("delete_column_statistics_by_partition", ret != false, null, tableName);
+    }
+    return ret;
+  }
+
+  @Override
   public boolean delete_table_column_statistics(String dbName, String tableName, String colName, String engine)
       throws TException {
     dbName = dbName.toLowerCase();
@@ -7459,6 +7517,68 @@ public class HMSHandler extends FacebookBase implements IHMSHandler {
               EventType.DELETE_TABLE_COLUMN_STAT,
               new DeleteTableColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME],
                   tableName, colName, engine, this));
+        }
+      }
+      boolean isPartitioned = table.isSetPartitionKeys() && table.getPartitionKeysSize() > 0;
+      if (isPartitioned) {
+        delete_partition_column_statistics(dbName, tableName, null, colName, engine);
+      }
+      committed = getMS().commitTransaction();
+    } finally {
+      if (!committed) {
+        getMS().rollbackTransaction();
+      }
+      endFunction("delete_column_statistics_by_table", ret != false, null, tableName);
+    }
+    return ret;
+  }
+
+  @Override
+  public boolean delete_table_column_statistics_req(DeleteTableColumnStatisticsRequest req)
+          throws TException {
+    String dbName = req.getDb_name();
+    String tableName = req.getTbl_name();
+    List<String> colNames = req.getCol_names();
+    String engine = req.getEngine();
+    dbName = dbName.toLowerCase();
+    tableName = tableName.toLowerCase();
+
+    String[] parsedDbName = parseDbName(dbName, conf);
+
+    if (colNames != null) {
+      for (String colName : colNames) {
+        colName = colName.toLowerCase();
+        startFunction("delete_column_statistics_by_table", ": table=" +
+                TableName.getQualified(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName) + " column=" +
+                colName);
+      }
+    }
+
+    boolean ret = false, committed = false;
+    getMS().openTransaction();
+    try {
+      Table table = getMS().getTable(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName);
+      // This API looks unused; if it were used we'd need to update stats state and write ID.
+      // We cannot just randomly nuke some txn stats.
+      if (TxnUtils.isTransactionalTable(table)) {
+        throw new MetaException("Cannot delete stats via this API for a transactional table");
+      }
+
+      ret = getMS().deleteTableMultiColumnStatistics(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName, colNames, engine);
+      if (ret && colNames != null) {
+        for (String colName : colNames) {
+          if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                    EventType.DELETE_TABLE_COLUMN_STAT,
+                    new DeleteTableColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME],
+                            tableName, colName, engine, this));
+          }
+          if (!listeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(listeners,
+                    EventType.DELETE_TABLE_COLUMN_STAT,
+                    new DeleteTableColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME],
+                            tableName, colName, engine, this));
+          }
         }
       }
       committed = getMS().commitTransaction();

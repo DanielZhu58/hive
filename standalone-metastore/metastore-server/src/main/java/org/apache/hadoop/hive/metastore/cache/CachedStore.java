@@ -47,16 +47,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.DatabaseName;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.TableName;
-import org.apache.hadoop.hive.metastore.Deadline;
-import org.apache.hadoop.hive.metastore.FileMetadataHandler;
-import org.apache.hadoop.hive.metastore.ObjectStore;
-import org.apache.hadoop.hive.metastore.PartFilterExprUtil;
-import org.apache.hadoop.hive.metastore.PartitionExpressionProxy;
-import org.apache.hadoop.hive.metastore.RawStore;
-import org.apache.hadoop.hive.metastore.TableType;
-import org.apache.hadoop.hive.metastore.TransactionalMetaStoreEventListener;
-import org.apache.hadoop.hive.metastore.Warehouse;
-import org.apache.hadoop.hive.metastore.HiveAlterHandler;
+import org.apache.hadoop.hive.metastore.*;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.metastore.api.Package;
 import org.apache.hadoop.hive.metastore.cache.SharedCache.StatsType;
@@ -2201,6 +2192,29 @@ public class CachedStore implements RawStore, Configurable {
     return succ;
   }
 
+  @Override public boolean deleteTableMultiColumnStatistics(String catName, String dbName, String tblName, List<String> colNames, String engine)
+          throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException {
+    if (!CacheUtils.HIVE_ENGINE.equals(engine)) {
+      throw new RuntimeException("CachedStore can only be enabled for Hive engine");
+    }
+    boolean succ = rawStore.deleteTableMultiColumnStatistics(catName, dbName, tblName, colNames, engine);
+    // in case of event based cache update, cache is updated during commit txn
+    if (succ && !canUseEvents) {
+      catName = normalizeIdentifier(catName);
+      dbName = normalizeIdentifier(dbName);
+      tblName = normalizeIdentifier(tblName);
+      if (!shouldCacheTable(catName, dbName, tblName)) {
+        return succ;
+      }
+      if (colNames != null) {
+        for (String colName : colNames) {
+          sharedCache.removeTableColStatsFromCache(catName, dbName, tblName, colName);
+        }
+      }
+    }
+    return succ;
+  }
+
   private void updatePartitionColumnStatisticsInCache(ColumnStatistics colStats, Map<String, String> newParams,
                                                   List<String> partVals) throws MetaException, NoSuchObjectException {
     String catName = colStats.getStatsDesc().isSetCatName() ? normalizeIdentifier(
@@ -2315,6 +2329,30 @@ public class CachedStore implements RawStore, Configurable {
         return succ;
       }
       sharedCache.removePartitionColStatsFromCache(catName, dbName, tblName, partVals, colName);
+    }
+    return succ;
+  }
+
+  @Override public boolean deletePartitionMultiColumnStatistics(String catName, String dbName, String tblName,
+                                                           String partName, List<String> partVals, List<String> colNames, String engine)
+          throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException {
+    if (!CacheUtils.HIVE_ENGINE.equals(engine)) {
+      throw new RuntimeException("CachedStore can only be enabled for Hive engine");
+    }
+    boolean succ = rawStore.deletePartitionMultiColumnStatistics(catName, dbName, tblName, partName, partVals, colNames, engine);
+    // in case of event based cache update, cache is updated during commit txn.
+    if (succ && !canUseEvents) {
+      catName = normalizeIdentifier(catName);
+      dbName = normalizeIdentifier(dbName);
+      tblName = normalizeIdentifier(tblName);
+      if (!shouldCacheTable(catName, dbName, tblName)) {
+        return succ;
+      }
+      if (colNames != null) {
+        for (String colName : colNames) {
+          sharedCache.removePartitionColStatsFromCache(catName, dbName, tblName, partVals, colName);
+        }
+      }
     }
     return succ;
   }

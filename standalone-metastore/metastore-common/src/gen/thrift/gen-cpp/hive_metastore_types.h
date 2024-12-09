@@ -1063,6 +1063,10 @@ class Package;
 
 class GetAllWriteEventInfoRequest;
 
+class DeletePartitionColumnStatisticsRequest;
+
+class DeleteTableColumnStatisticsRequest;
+
 class MetaException;
 
 class UnknownTableException;
@@ -21222,6 +21226,148 @@ class GetAllWriteEventInfoRequest : public virtual ::apache::thrift::TBase {
 void swap(GetAllWriteEventInfoRequest &a, GetAllWriteEventInfoRequest &b);
 
 std::ostream& operator<<(std::ostream& out, const GetAllWriteEventInfoRequest& obj);
+
+typedef struct _DeletePartitionColumnStatisticsRequest__isset {
+  _DeletePartitionColumnStatisticsRequest__isset() : col_names(false) {}
+  bool col_names :1;
+} _DeletePartitionColumnStatisticsRequest__isset;
+
+class DeletePartitionColumnStatisticsRequest : public virtual ::apache::thrift::TBase {
+ public:
+
+  DeletePartitionColumnStatisticsRequest(const DeletePartitionColumnStatisticsRequest&);
+  DeletePartitionColumnStatisticsRequest& operator=(const DeletePartitionColumnStatisticsRequest&);
+  DeletePartitionColumnStatisticsRequest() noexcept
+                                         : cat_name(),
+                                           db_name(),
+                                           tbl_name(),
+                                           part_name(),
+                                           engine() {
+  }
+
+  virtual ~DeletePartitionColumnStatisticsRequest() noexcept;
+  std::string cat_name;
+  std::string db_name;
+  std::string tbl_name;
+  std::string part_name;
+  std::vector<std::string>  col_names;
+  std::string engine;
+
+  _DeletePartitionColumnStatisticsRequest__isset __isset;
+
+  void __set_cat_name(const std::string& val);
+
+  void __set_db_name(const std::string& val);
+
+  void __set_tbl_name(const std::string& val);
+
+  void __set_part_name(const std::string& val);
+
+  void __set_col_names(const std::vector<std::string> & val);
+
+  void __set_engine(const std::string& val);
+
+  bool operator == (const DeletePartitionColumnStatisticsRequest & rhs) const
+  {
+    if (!(cat_name == rhs.cat_name))
+      return false;
+    if (!(db_name == rhs.db_name))
+      return false;
+    if (!(tbl_name == rhs.tbl_name))
+      return false;
+    if (!(part_name == rhs.part_name))
+      return false;
+    if (__isset.col_names != rhs.__isset.col_names)
+      return false;
+    else if (__isset.col_names && !(col_names == rhs.col_names))
+      return false;
+    if (!(engine == rhs.engine))
+      return false;
+    return true;
+  }
+  bool operator != (const DeletePartitionColumnStatisticsRequest &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DeletePartitionColumnStatisticsRequest & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot) override;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const override;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(DeletePartitionColumnStatisticsRequest &a, DeletePartitionColumnStatisticsRequest &b);
+
+std::ostream& operator<<(std::ostream& out, const DeletePartitionColumnStatisticsRequest& obj);
+
+typedef struct _DeleteTableColumnStatisticsRequest__isset {
+  _DeleteTableColumnStatisticsRequest__isset() : col_names(false) {}
+  bool col_names :1;
+} _DeleteTableColumnStatisticsRequest__isset;
+
+class DeleteTableColumnStatisticsRequest : public virtual ::apache::thrift::TBase {
+ public:
+
+  DeleteTableColumnStatisticsRequest(const DeleteTableColumnStatisticsRequest&);
+  DeleteTableColumnStatisticsRequest& operator=(const DeleteTableColumnStatisticsRequest&);
+  DeleteTableColumnStatisticsRequest() noexcept
+                                     : cat_name(),
+                                       db_name(),
+                                       tbl_name(),
+                                       engine() {
+  }
+
+  virtual ~DeleteTableColumnStatisticsRequest() noexcept;
+  std::string cat_name;
+  std::string db_name;
+  std::string tbl_name;
+  std::vector<std::string>  col_names;
+  std::string engine;
+
+  _DeleteTableColumnStatisticsRequest__isset __isset;
+
+  void __set_cat_name(const std::string& val);
+
+  void __set_db_name(const std::string& val);
+
+  void __set_tbl_name(const std::string& val);
+
+  void __set_col_names(const std::vector<std::string> & val);
+
+  void __set_engine(const std::string& val);
+
+  bool operator == (const DeleteTableColumnStatisticsRequest & rhs) const
+  {
+    if (!(cat_name == rhs.cat_name))
+      return false;
+    if (!(db_name == rhs.db_name))
+      return false;
+    if (!(tbl_name == rhs.tbl_name))
+      return false;
+    if (__isset.col_names != rhs.__isset.col_names)
+      return false;
+    else if (__isset.col_names && !(col_names == rhs.col_names))
+      return false;
+    if (!(engine == rhs.engine))
+      return false;
+    return true;
+  }
+  bool operator != (const DeleteTableColumnStatisticsRequest &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DeleteTableColumnStatisticsRequest & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot) override;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const override;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(DeleteTableColumnStatisticsRequest &a, DeleteTableColumnStatisticsRequest &b);
+
+std::ostream& operator<<(std::ostream& out, const DeleteTableColumnStatisticsRequest& obj);
 
 typedef struct _MetaException__isset {
   _MetaException__isset() : message(false) {}

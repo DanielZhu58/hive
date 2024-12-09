@@ -39,6 +39,9 @@ import org.apache.hadoop.hive.metastore.api.Package;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.thrift.TException;
 
+import static org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.getDefaultCatalog;
+import static org.apache.hadoop.hive.metastore.utils.MetaStoreUtils.prependCatalogToDbName;
+
 /**
  * Wrapper around hive metastore thrift api
  */
@@ -2717,6 +2720,33 @@ public interface IMetaStoreClient extends AutoCloseable {
       throws NoSuchObjectException, MetaException, InvalidObjectException, TException, InvalidInputException;
 
   /**
+   * Delete partition level column statistics given dbName, tableName, partName and colName, or
+   * all columns in a partition.
+   * @param dbName database name.
+   * @param tableName table name.
+   * @param partName partition name.
+   * @param colNames a list of column name, or null for all columns
+   * @param engine engine, or null for all engines
+   * @return boolean indicating outcome of the operation
+   * @throws NoSuchObjectException no such partition exists
+   * @throws InvalidObjectException error dropping the stats data
+   * @throws MetaException error accessing the RDBMS
+   * @throws TException thrift transport error
+   * @throws InvalidInputException input is invalid or null.
+   */
+  public boolean deletePartitionMultiColumnStatistics(String dbName, String tableName, String partName,
+                                                      List<String> colNames, String engine) throws TException;
+
+  /**
+   * Delete partition level column statistics given dbName, tableName, partName and colName, or
+   * all columns in a partition.
+   * @param req the DeletePartitionColumnStatisticsRequest which including
+   *            catalog name, database name, table name, partition name, column names, and engine name
+   * @throws TException thrift transport error
+   */
+  public boolean deletePartitionMultiColumnStatistics(DeletePartitionColumnStatisticsRequest req) throws TException;
+
+  /**
    * Delete table level column statistics given dbName, tableName and colName, or all columns in
    * a table.  This should be used for non-partitioned tables.
    * @param dbName database name
@@ -2750,6 +2780,29 @@ public interface IMetaStoreClient extends AutoCloseable {
    */
   boolean deleteTableColumnStatistics(String catName, String dbName, String tableName, String colName, String engine)
       throws NoSuchObjectException, MetaException, InvalidObjectException, TException, InvalidInputException;
+
+  /**
+   * Delete table level column statistics given dbName, tableName and colName, or all columns in
+   * a table.  This should be used for non-partitioned tables.
+   * @param dbName database name
+   * @param tableName table name
+   * @param colNames a list of column names, or null to drop stats for all columns
+   * @param engine engine, or null for all engines
+   * @return boolean indicating the outcome of the operation
+   * @throws TException thrift transport error
+   */
+  boolean deleteTableMultiColumnStatistics(String dbName, String tableName, List<String> colNames, String engine)
+          throws TException;
+
+  /**
+   * Delete table level column statistics given dbName, tableName and colName, or all columns in
+   * a table.  This should be used for non-partitioned tables.
+   * @param req the DeleteTableColumnStatisticsRequest which including
+   *            catalog name, database name, table name, column names, and engine name
+   * @return boolean indicating the outcome of the operation
+   * @throws TException thrift transport error
+   */
+  public boolean deleteTableMultiColumnStatistics(DeleteTableColumnStatisticsRequest req) throws TException;
 
   void updateTransactionalStatistics(UpdateTransactionalStatsRequest req) throws TException;
 

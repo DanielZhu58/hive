@@ -41,6 +41,7 @@ import java.lang.reflect.*;
 import static org.mockito.Mockito.mock;
 
 import com.google.common.collect.Sets;
+import org.apache.hadoop.hive.metastore.annotation.MetastoreUnitTest;
 import org.apache.hadoop.hive.metastore.api.DataConnector;
 import org.apache.hadoop.hive.metastore.api.DatabaseType;
 import org.apache.hadoop.hive.metastore.api.GetPartitionsFilterSpec;
@@ -66,6 +67,7 @@ import org.datanucleus.api.jdo.JDOPersistenceManager;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -117,6 +119,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+@Category(MetastoreUnitTest.class)
 public abstract class TestHiveMetaStore {
   private static final Logger LOG = LoggerFactory.getLogger(TestHiveMetaStore.class);
   protected static HiveMetaStoreClient client;
@@ -1856,6 +1859,49 @@ public abstract class TestHiveMetaStore {
       colStats2 = client.getTableColumnStatistics(
           dbName, tblName, Lists.newArrayList(colName[0]), ENGINE).get(0);
 
+      // test delete column stats; if no col name is passed all column stats associated with the
+      // table is deleted
+      status = client.deleteTableColumnStatistics(dbName, tblName, colName[0], ENGINE);
+      assertTrue(status);
+      // try to query stats for a column for which stats doesn't exist
+      stats = client.getTableColumnStatistics(
+              dbName, tblName, Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats, stats.isEmpty());
+
+      // reset the column stats
+      client.updateTableColumnStatistics(colStats);
+      // test delete multiple column stats(column names can be null, or one, or multiple)
+      // case 1: column names are null, all column stats should be deleted
+      status = client.deleteTableMultiColumnStatistics(dbName, tblName, null, ENGINE);
+      assertTrue(status);
+      stats = client.getTableColumnStatistics(
+              dbName, tblName, Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats, stats.isEmpty());
+      stats = client.getTableColumnStatistics(
+              dbName, tblName, Lists.newArrayList(colName[1]), ENGINE);
+      assertTrue("stats are not empty: " + stats, stats.isEmpty());
+
+      client.updateTableColumnStatistics(colStats);
+      // case 2: column names only contains one column name, then that column stats should be deleted
+      List<String> singleColNameList = new ArrayList<>();
+      singleColNameList.add(colName[0]);
+      status = client.deleteTableMultiColumnStatistics(dbName, tblName, singleColNameList, ENGINE);
+      assertTrue(status);
+      stats = client.getTableColumnStatistics(
+              dbName, tblName, Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats, stats.isEmpty());
+
+      client.updateTableColumnStatistics(colStats);
+      //case 3: column names contains multiple column names, then delete the column stats in the column name list
+      status = client.deleteTableMultiColumnStatistics(dbName, tblName, Arrays.asList(colName), ENGINE);
+      assertTrue(status);
+      stats = client.getTableColumnStatistics(
+              dbName, tblName, Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats, stats.isEmpty());
+      stats = client.getTableColumnStatistics(
+              dbName, tblName, Lists.newArrayList(colName[1]), ENGINE);
+      assertTrue("stats are not empty: " + stats, stats.isEmpty());
+
       // partition level column statistics test
       // create a table with multiple partitions
       cleanUp(dbName, tblName, typeName);
@@ -1885,30 +1931,57 @@ public abstract class TestHiveMetaStore {
       colStats.setStatsObj(statsObjs);
       colStats.setEngine(ENGINE);
 
-     client.updatePartitionColumnStatistics(colStats);
+      client.updatePartitionColumnStatistics(colStats);
 
-     colStats2 = client.getPartitionColumnStatistics(dbName, tblName,
+      colStats2 = client.getPartitionColumnStatistics(dbName, tblName,
          Lists.newArrayList(partName), Lists.newArrayList(colName[1]), ENGINE).get(partName).get(0);
 
-     // compare stats obj to ensure what we get is what we wrote
-     assertNotNull(colStats2);
-     assertEquals(colStats.getStatsDesc().getPartName(), partName);
-     assertEquals(colStats2.getColName(), colName[1]);
-     assertEquals(colStats2.getStatsData().getStringStats().getMaxColLen(), maxColLen);
-     assertEquals(colStats2.getStatsData().getStringStats().getAvgColLen(), avgColLen, 0.01);
-     assertEquals(colStats2.getStatsData().getStringStats().getNumNulls(), numNulls);
-     assertEquals(colStats2.getStatsData().getStringStats().getNumDVs(), numDVs);
+      // compare stats obj to ensure what we get is what we wrote
+      assertNotNull(colStats2);
+      assertEquals(colStats.getStatsDesc().getPartName(), partName);
+      assertEquals(colStats2.getColName(), colName[1]);
+      assertEquals(colStats2.getStatsData().getStringStats().getMaxColLen(), maxColLen);
+      assertEquals(colStats2.getStatsData().getStringStats().getAvgColLen(), avgColLen, 0.01);
+      assertEquals(colStats2.getStatsData().getStringStats().getNumNulls(), numNulls);
+      assertEquals(colStats2.getStatsData().getStringStats().getNumDVs(), numDVs);
 
-     // test stats deletion at partition level
-     client.deletePartitionColumnStatistics(dbName, tblName, partName, colName[1], ENGINE);
+      // test stats deletion at partition level
+      status = client.deletePartitionColumnStatistics(dbName, tblName, partName, colName[0], ENGINE);
+      assertTrue(status);
+      Map<String, List<ColumnStatisticsObj>> stats2 = client.getPartitionColumnStatistics(dbName, tblName,
+              Lists.newArrayList(partName), Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
 
-     colStats2 = client.getPartitionColumnStatistics(dbName, tblName,
-         Lists.newArrayList(partName), Lists.newArrayList(colName[0]), ENGINE).get(partName).get(0);
+      client.updatePartitionColumnStatistics(colStats);
+      // test delete multiple column stats
+      // case 1: column names are null, all column stats should be deleted
+      status = client.deletePartitionMultiColumnStatistics(dbName, tblName, partName, null, ENGINE);
+      assertTrue(status);
+      stats2 = client.getPartitionColumnStatistics(dbName, tblName,
+              Lists.newArrayList(partName), Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
+      stats2 = client.getPartitionColumnStatistics(dbName, tblName,
+              Lists.newArrayList(partName), Lists.newArrayList(colName[1]), ENGINE);
+      assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
 
-     // test get stats on a column for which stats doesn't exist
-     Map<String, List<ColumnStatisticsObj>> stats2 = client.getPartitionColumnStatistics(dbName, tblName,
-         Lists.newArrayList(partName), Lists.newArrayList(colName[1]), ENGINE);
-     assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
+      client.updatePartitionColumnStatistics(colStats);
+      // case 2: column names only contains one column name, then that column stats should be deleted
+      status = client.deletePartitionMultiColumnStatistics(dbName, tblName, partName, Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue(status);
+      stats2 = client.getPartitionColumnStatistics(dbName, tblName,
+              Lists.newArrayList(partName), Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
+
+      client.updatePartitionColumnStatistics(colStats);
+      //case 3: column names contains multiple column names, then delete the column stats in the column name list
+      status = client.deletePartitionMultiColumnStatistics(dbName, tblName, partName, Arrays.asList(colName), ENGINE);
+      assertTrue(status);
+      stats2 = client.getPartitionColumnStatistics(dbName, tblName,
+              Lists.newArrayList(partName), Lists.newArrayList(colName[0]), ENGINE);
+      assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
+      stats2 = client.getPartitionColumnStatistics(dbName, tblName,
+              Lists.newArrayList(partName), Lists.newArrayList(colName[1]), ENGINE);
+      assertTrue("stats are not empty: " + stats2, stats2.isEmpty());
     } catch (Exception e) {
       System.err.println(StringUtils.stringifyException(e));
       System.err.println("testColumnStatistics() failed.");

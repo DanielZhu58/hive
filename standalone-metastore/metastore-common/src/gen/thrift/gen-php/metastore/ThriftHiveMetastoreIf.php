@@ -1172,6 +1172,15 @@ interface ThriftHiveMetastoreIf extends \FacebookServiceIf
      */
     public function delete_partition_column_statistics($db_name, $tbl_name, $part_name, $col_name, $engine);
     /**
+     * @param \metastore\DeletePartitionColumnStatisticsRequest $req
+     * @return bool
+     * @throws \metastore\NoSuchObjectException
+     * @throws \metastore\MetaException
+     * @throws \metastore\InvalidObjectException
+     * @throws \metastore\InvalidInputException
+     */
+    public function delete_partition_column_statistics_req(\metastore\DeletePartitionColumnStatisticsRequest $req);
+    /**
      * @param string $db_name
      * @param string $tbl_name
      * @param string $col_name
@@ -1183,6 +1192,15 @@ interface ThriftHiveMetastoreIf extends \FacebookServiceIf
      * @throws \metastore\InvalidInputException
      */
     public function delete_table_column_statistics($db_name, $tbl_name, $col_name, $engine);
+    /**
+     * @param \metastore\DeleteTableColumnStatisticsRequest $req
+     * @return bool
+     * @throws \metastore\NoSuchObjectException
+     * @throws \metastore\MetaException
+     * @throws \metastore\InvalidObjectException
+     * @throws \metastore\InvalidInputException
+     */
+    public function delete_table_column_statistics_req(\metastore\DeleteTableColumnStatisticsRequest $req);
     /**
      * @param \metastore\Function $func
      * @throws \metastore\AlreadyExistsException

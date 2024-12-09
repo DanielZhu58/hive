@@ -3659,6 +3659,20 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
   }
 
   @Override
+  public boolean deletePartitionMultiColumnStatistics(String dbName, String tableName, String partName,
+                                                 List<String> colNames, String engine) throws TException {
+    DeletePartitionColumnStatisticsRequest req = new DeletePartitionColumnStatisticsRequest(getDefaultCatalog(conf),
+            dbName, tableName, partName, engine);
+    req.setCol_names(colNames);
+    return deletePartitionMultiColumnStatistics(req);
+  }
+
+  @Override
+  public boolean deletePartitionMultiColumnStatistics(DeletePartitionColumnStatisticsRequest req) throws TException {
+    return client.delete_partition_column_statistics_req(req);
+  }
+
+  @Override
   public boolean deleteTableColumnStatistics(String dbName, String tableName, String colName, String engine)
       throws TException {
     return deleteTableColumnStatistics(getDefaultCatalog(conf), dbName, tableName, colName, engine);
@@ -3669,6 +3683,19 @@ public class HiveMetaStoreClient implements IMetaStoreClient, AutoCloseable {
       String colName, String engine) throws TException {
     return client.delete_table_column_statistics(prependCatalogToDbName(catName, dbName, conf),
         tableName, colName, engine);
+  }
+
+  @Override
+  public boolean deleteTableMultiColumnStatistics(String dbName, String tableName, List<String> colNames, String engine)
+          throws TException {
+    DeleteTableColumnStatisticsRequest req = new DeleteTableColumnStatisticsRequest(getDefaultCatalog(conf), dbName, tableName, engine);
+    req.setCol_names(colNames);
+    return deleteTableMultiColumnStatistics(req);
+  }
+
+  @Override
+  public boolean deleteTableMultiColumnStatistics(DeleteTableColumnStatisticsRequest req) throws TException {
+    return client.delete_table_column_statistics_req(req);
   }
 
   @Override

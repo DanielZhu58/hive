@@ -735,9 +735,19 @@ class ThriftHiveMetastoreHandler : virtual public ThriftHiveMetastoreIf {
     printf("delete_partition_column_statistics\n");
   }
 
+  bool delete_partition_column_statistics_req(const DeletePartitionColumnStatisticsRequest& req) {
+    // Your implementation goes here
+    printf("delete_partition_column_statistics_req\n");
+  }
+
   bool delete_table_column_statistics(const std::string& db_name, const std::string& tbl_name, const std::string& col_name, const std::string& engine) {
     // Your implementation goes here
     printf("delete_table_column_statistics\n");
+  }
+
+  bool delete_table_column_statistics_req(const DeleteTableColumnStatisticsRequest& req) {
+    // Your implementation goes here
+    printf("delete_table_column_statistics_req\n");
   }
 
   void create_function(const Function& func) {

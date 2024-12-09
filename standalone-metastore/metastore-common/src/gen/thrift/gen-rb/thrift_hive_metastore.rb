@@ -2451,6 +2451,25 @@ module ThriftHiveMetastore
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'delete_partition_column_statistics failed: unknown result')
     end
 
+    def delete_partition_column_statistics_req(req)
+      send_delete_partition_column_statistics_req(req)
+      return recv_delete_partition_column_statistics_req()
+    end
+
+    def send_delete_partition_column_statistics_req(req)
+      send_message('delete_partition_column_statistics_req', Delete_partition_column_statistics_req_args, :req => req)
+    end
+
+    def recv_delete_partition_column_statistics_req()
+      result = receive_message(Delete_partition_column_statistics_req_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise result.o3 unless result.o3.nil?
+      raise result.o4 unless result.o4.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'delete_partition_column_statistics_req failed: unknown result')
+    end
+
     def delete_table_column_statistics(db_name, tbl_name, col_name, engine)
       send_delete_table_column_statistics(db_name, tbl_name, col_name, engine)
       return recv_delete_table_column_statistics()
@@ -2468,6 +2487,25 @@ module ThriftHiveMetastore
       raise result.o3 unless result.o3.nil?
       raise result.o4 unless result.o4.nil?
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'delete_table_column_statistics failed: unknown result')
+    end
+
+    def delete_table_column_statistics_req(req)
+      send_delete_table_column_statistics_req(req)
+      return recv_delete_table_column_statistics_req()
+    end
+
+    def send_delete_table_column_statistics_req(req)
+      send_message('delete_table_column_statistics_req', Delete_table_column_statistics_req_args, :req => req)
+    end
+
+    def recv_delete_table_column_statistics_req()
+      result = receive_message(Delete_table_column_statistics_req_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise result.o3 unless result.o3.nil?
+      raise result.o4 unless result.o4.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'delete_table_column_statistics_req failed: unknown result')
     end
 
     def create_function(func)
@@ -6619,6 +6657,23 @@ module ThriftHiveMetastore
       write_result(result, oprot, 'delete_partition_column_statistics', seqid)
     end
 
+    def process_delete_partition_column_statistics_req(seqid, iprot, oprot)
+      args = read_args(iprot, Delete_partition_column_statistics_req_args)
+      result = Delete_partition_column_statistics_req_result.new()
+      begin
+        result.success = @handler.delete_partition_column_statistics_req(args.req)
+      rescue ::NoSuchObjectException => o1
+        result.o1 = o1
+      rescue ::MetaException => o2
+        result.o2 = o2
+      rescue ::InvalidObjectException => o3
+        result.o3 = o3
+      rescue ::InvalidInputException => o4
+        result.o4 = o4
+      end
+      write_result(result, oprot, 'delete_partition_column_statistics_req', seqid)
+    end
+
     def process_delete_table_column_statistics(seqid, iprot, oprot)
       args = read_args(iprot, Delete_table_column_statistics_args)
       result = Delete_table_column_statistics_result.new()
@@ -6634,6 +6689,23 @@ module ThriftHiveMetastore
         result.o4 = o4
       end
       write_result(result, oprot, 'delete_table_column_statistics', seqid)
+    end
+
+    def process_delete_table_column_statistics_req(seqid, iprot, oprot)
+      args = read_args(iprot, Delete_table_column_statistics_req_args)
+      result = Delete_table_column_statistics_req_result.new()
+      begin
+        result.success = @handler.delete_table_column_statistics_req(args.req)
+      rescue ::NoSuchObjectException => o1
+        result.o1 = o1
+      rescue ::MetaException => o2
+        result.o2 = o2
+      rescue ::InvalidObjectException => o3
+        result.o3 = o3
+      rescue ::InvalidInputException => o4
+        result.o4 = o4
+      end
+      write_result(result, oprot, 'delete_table_column_statistics_req', seqid)
     end
 
     def process_create_function(seqid, iprot, oprot)
@@ -13617,6 +13689,46 @@ module ThriftHiveMetastore
     ::Thrift::Struct.generate_accessors self
   end
 
+  class Delete_partition_column_statistics_req_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    REQ = 1
+
+    FIELDS = {
+      REQ => {:type => ::Thrift::Types::STRUCT, :name => 'req', :class => ::DeletePartitionColumnStatisticsRequest}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Delete_partition_column_statistics_req_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+    O2 = 2
+    O3 = 3
+    O4 = 4
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::NoSuchObjectException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::MetaException},
+      O3 => {:type => ::Thrift::Types::STRUCT, :name => 'o3', :class => ::InvalidObjectException},
+      O4 => {:type => ::Thrift::Types::STRUCT, :name => 'o4', :class => ::InvalidInputException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
   class Delete_table_column_statistics_args
     include ::Thrift::Struct, ::Thrift::Struct_Union
     DB_NAME = 1
@@ -13640,6 +13752,46 @@ module ThriftHiveMetastore
   end
 
   class Delete_table_column_statistics_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+    O2 = 2
+    O3 = 3
+    O4 = 4
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::NoSuchObjectException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::MetaException},
+      O3 => {:type => ::Thrift::Types::STRUCT, :name => 'o3', :class => ::InvalidObjectException},
+      O4 => {:type => ::Thrift::Types::STRUCT, :name => 'o4', :class => ::InvalidInputException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Delete_table_column_statistics_req_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    REQ = 1
+
+    FIELDS = {
+      REQ => {:type => ::Thrift::Types::STRUCT, :name => 'req', :class => ::DeleteTableColumnStatisticsRequest}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Delete_table_column_statistics_req_result
     include ::Thrift::Struct, ::Thrift::Struct_Union
     SUCCESS = 0
     O1 = 1

@@ -1394,9 +1394,32 @@ public interface RawStore extends Configurable {
    * @throws InvalidObjectException error dropping the stats
    * @throws InvalidInputException bad input, such as null table or database name.
    */
-  boolean deletePartitionColumnStatistics(String catName, String dbName, String tableName,
-      String partName, List<String> partVals, String colName, String engine)
-      throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException;
+  default boolean deletePartitionColumnStatistics(String catName, String dbName, String tableName,
+    String partName, List<String> partVals, String colName, String engine)
+    throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException{
+    return false;
+  };
+
+  /**
+   * Deletes column statistics if present associated with a given db, table, partition and a list of cols. If
+   * null is passed instead of a colName, stats when present for all columns associated
+   * with a given db, table and partition are deleted.
+   * @param catName catalog name.
+   * @param dbName database name.
+   * @param tableName table name.
+   * @param partName partition name.
+   * @param partVals partition values.
+   * @param colNames a list of column names.
+   * @param engine engine for which we want to delete statistics
+   * @return Boolean indicating the outcome of the operation
+   * @throws NoSuchObjectException no such partition
+   * @throws MetaException error access the RDBMS
+   * @throws InvalidObjectException error dropping the stats
+   * @throws InvalidInputException bad input, such as null table or database name.
+   */
+  boolean deletePartitionMultiColumnStatistics(String catName, String dbName, String tableName,
+    String partName, List<String> partVals, List<String> colNames, String engine)
+    throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException;
 
   /**
    * Delete statistics for a single column or all columns in a table.
@@ -1413,6 +1436,23 @@ public interface RawStore extends Configurable {
    */
   boolean deleteTableColumnStatistics(String catName, String dbName, String tableName,
     String colName, String engine)
+    throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException;
+
+  /**
+   * Delete statistics for a single column, a list of columns or all columns in a table.
+   * @param catName catalog name
+   * @param dbName database name
+   * @param tableName table name
+   * @param colNames a list of column names.  Null to delete stats for all columns in the table.
+   * @param engine engine for which we want to delete statistics
+   * @return true if the statistics were deleted.
+   * @throws NoSuchObjectException no such table or column.
+   * @throws MetaException error access the RDBMS.
+   * @throws InvalidObjectException error dropping the stats
+   * @throws InvalidInputException bad inputs, such as null table name.
+   */
+  boolean deleteTableMultiColumnStatistics(String catName, String dbName, String tableName,
+    List<String> colNames, String engine)
     throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException;
 
   long cleanupEvents();
