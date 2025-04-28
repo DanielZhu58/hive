@@ -7440,6 +7440,15 @@ public class HMSHandler extends FacebookBase implements IHMSHandler {
             }
             events.add(new DeleteTableColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName, colName, engine, this));
           }
+          /**
+          if (colNames == null){
+            // remove all column names in parameter COLUMN_STATS_ACCURATE
+            StatsSetupConst.clearColumnStatsState(table.getParameters());
+          } else {
+            // remove the deleted column names in parameter COLUMN_STATS_ACCURATE
+            StatsSetupConst.removeColumnStatsState(table.getParameters(), colNames);
+          }
+           **/
         }
       } else {
         List<String> partNames = new ArrayList<>();
@@ -7460,6 +7469,8 @@ public class HMSHandler extends FacebookBase implements IHMSHandler {
               .collect(Collectors.toList()) : colNames) {
             for (String partName : partNames) {
               List<String> partVals = getPartValsFromName(table, partName);
+              Partition partition = rawStore.getPartition(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName, partVals);
+              Map<String, String> partParams = partition.getParameters();
               if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
                 MetaStoreListenerNotifier.notifyEvent(transactionalListeners, eventType,
                     new DeletePartitionColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName,
@@ -7467,6 +7478,15 @@ public class HMSHandler extends FacebookBase implements IHMSHandler {
               }
               events.add(new DeletePartitionColumnStatEvent(parsedDbName[CAT_NAME], parsedDbName[DB_NAME], tableName,
                   partName, partVals, colName, engine, this));
+              /**
+              if (colNames == null) {
+                // remove all column names in parameter COLUMN_STATS_ACCURATE
+                StatsSetupConst.clearColumnStatsState(partParams);
+              } else {
+                // remove the deleted column names in parameter COLUMN_STATS_ACCURATE
+                StatsSetupConst.removeColumnStatsState(partParams, colNames);
+              }
+               **/
             }
           }
         }

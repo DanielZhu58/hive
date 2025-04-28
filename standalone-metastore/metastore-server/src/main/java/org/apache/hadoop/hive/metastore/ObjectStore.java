@@ -10278,6 +10278,8 @@ public class ObjectStore implements RawStore, Configurable {
           List<MPartitionColumnStatistics> mStatsObjColl =
               (List<MPartitionColumnStatistics>) query.executeWithArray(params.toArray());
           pm.retrieveAll(mStatsObjColl);
+          Long tableID = directSql.getTableId(dbName, tableName);
+          directSql.deleteColumnStatsState(tableID);
           if (mStatsObjColl != null) {
             pm.deletePersistentAll(mStatsObjColl);
           } else {
@@ -10363,6 +10365,8 @@ public class ObjectStore implements RawStore, Configurable {
       }
       mStatsObjColl = (List<MTableColumnStatistics>) query.executeWithArray(params.toArray());
       pm.retrieveAll(mStatsObjColl);
+      Long tableID = directSql.getTableId(dbName, tableName);
+      directSql.deleteTblColumnStatsState(tableID);
       if (mStatsObjColl != null) {
         pm.deletePersistentAll(mStatsObjColl);
       } else {
