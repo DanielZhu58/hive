@@ -128,6 +128,8 @@ public class BasicStatsTask implements Serializable, IStatsProcessor {
     private Map<String, String> providedBasicStats;
     private boolean skipStatsUpdate = false;
 
+    private HiveConf conf;
+
     public BasicStatsProcessor(Partish partish, BasicStatsWork work, boolean followedColStats2) {
       this.partish = partish;
       this.work = work;
@@ -182,6 +184,48 @@ public class BasicStatsTask implements Serializable, IStatsProcessor {
         parameters.putAll(providedBasicStats);
       }
 
+      try {
+        long totalSize = 0L, numFiles = 0L;
+        // the stats are in the parameters already
+        String ts = parameters.get(StatsSetupConst.TOTAL_SIZE);
+        String nf = parameters.get(StatsSetupConst.NUM_FILES);
+        if (ts != null && nf != null) {
+          try {
+            totalSize = Long.parseLong(ts);
+            numFiles  = Long.parseLong(nf);
+          } catch (NumberFormatException ignore) {
+          }
+        }
+        if (numFiles > 1 && totalSize > 0) {
+          long threshold = (conf != null)
+                  ? conf.getLongVar(HiveConf.ConfVars.HIVE_MERGE_MAP_FILES_AVG_SIZE)
+                  : HiveConf.ConfVars.HIVE_MERGE_MAP_FILES_AVG_SIZE.defaultLongVal;
+
+          long avg = totalSize / numFiles;
+          if (avg <= threshold) {
+            // both work for non-partitioned and partitioned tables
+            String who = (p.getPartition() == null)
+                    ? ("table " + p.getTable().getFullyQualifiedName())
+                    : ("partition " + p.getPartition().getName());
+
+            // add the small files warnings in the log
+            LOG.info("[ANALYZE] Small files detected: {} avgBytes={}, files={}, totalBytes={}",
+                    who, avg, numFiles, totalSize);
+
+            // print out the small files warnings in the console
+            org.apache.hadoop.hive.ql.session.SessionState ss =
+                    org.apache.hadoop.hive.ql.session.SessionState.get();
+            if (ss != null && ss.getConsole() != null) {
+              ss.getConsole().printInfo(String.format(
+                      "[ANALYZE] Small files detected: %s (avgBytes=%d, files=%d, totalBytes=%d)",
+                      who, avg, numFiles, totalSize));
+            }
+          }
+        }
+      } catch (Throwable t) {
+        LOG.warn("[ANALYZE] Small files check failed: {}", t.toString());
+      }
+
       if (statsAggregator != null && !skipStatsUpdate) {
         // Update stats for transactional tables (MM, or full ACID with overwrite), even
         // though we are marking stats as not being accurate.
@@ -195,6 +239,7 @@ public class BasicStatsTask implements Serializable, IStatsProcessor {
     }
 
     public void collectFileStatus(Warehouse wh, HiveConf conf) throws MetaException, IOException {
+      this.conf = conf;
       if (providedBasicStats == null) {
         if (!partish.isTransactionalTable()) {
           partfileStatus = wh.getFileStatusesForSD(partish.getPartSd());
